@@ -27,7 +27,6 @@ void task1()
     fgets(buf, 16, file);
     int numLines = 0;
     const int width = strlen(buf) - 1;
-    printf("width: %d\n", width);
 
     int *bitCounts = malloc(sizeof(int) * width);
     for (int i=0; i<width; i++) {
@@ -45,13 +44,6 @@ void task1()
         }
     } while (fgets(buf, 16, file));
 
-    printf("read %d lines\n", numLines);
-    printf("bitcounts: ");
-    for (int i=0; i<width; i++) {
-        printf("%d ", bitCounts[i]);
-    }
-    printf("\n");
-
     // Calculate gamma
     int gamma = 0;
     for (int i=0; i<width; i++) {
@@ -67,10 +59,7 @@ void task1()
     }
     const int epsilon = (~gamma) & mask;
 
-    printf("--------------\n");
-    printf("gamma:   %d\n", gamma);
-    printf("epsilon: %d\n", epsilon);
-    printf("result:  %d\n", gamma * epsilon);
+    printf("t1:%d\n", gamma * epsilon);
 
     free(bitCounts);
     free(buf);
@@ -173,18 +162,14 @@ void task2()
         }
     }
 
-    printf("co2rating: %d\n", co2Rating);
-    printf("oxyrating: %d\n", oxygenRating);
-    printf("multiplied: %d\n", co2Rating * oxygenRating);
+    printf("t2:%d\n", co2Rating * oxygenRating);
 
     free(gbuf);
 }
 
 int main()
 {
-    printf("-- task1 --\n");
     task1();
-    printf("-- task2 --\n");
     task2();
     return 0;
 }
