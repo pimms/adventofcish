@@ -1,14 +1,13 @@
 #!/bin/bash
 
-for i in {1..25}
-do
-    if [ ! -d dec$i ];
-    then
-        mkdir dec$i
+i=$1
 
-        sed s/TEMPLATE/dec$i.c/g run > dec$i/run
-        chmod +x dec$i/run
+if [ ! -d dec$i ];
+then
+    mkdir dec$i
 
-        cp templ.c dec$i/dec$i.c
-    fi
-done
+    sed s/TEMPLATE/dec$i.c/g run > dec$i/run
+    chmod +x dec$i/run
+
+    cp templ.c dec$i/dec$i.c
+fi

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ -f dec3.c ]; then
+    cish_cli -m 4096 dec3.c
+else
+    exit "No input file :("
+fi
+
