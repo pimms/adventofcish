@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ -f dec4.c ]; then
+    cish_cli -m 16384 dec4.c
+else
+    exit "No input file :("
+fi
+
