@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -f TEMPLATE ]; then
-    cish_cli -m 4096 TEMPLATE
+    cish_cli -m 4096 TEMPLATE $@
 else
     exit "No input file :("
 fi
