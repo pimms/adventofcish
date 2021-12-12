@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ -f dec9.c ]; then
+    cish_cli -m 20000000 dec9.c $@
+else
+    exit "No input file :("
+fi
+
