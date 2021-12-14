@@ -8,22 +8,51 @@
 /* STRUCTS */
 /* =====  */
 
+struct edge
+{
+    // Forward declaration of structs is not supported in Cish.
+    // This will have to do :)
+    void *vert;
+
+    struct edge *next;
+};
+
 struct vertex
 {
     char *name;
-    int visited;
-    int large;
-    struct vertex *con;
+    int visits;
+    int maxVisits;
+    struct edge *edges;
 };
 
 struct vnode
 {
     struct vertex *vert;
-    struct vnode *edges;
     struct vnode *next;
 };
 
 void vertex_free(struct vertex *v);
+
+/*  ==== */
+/* EDGE */
+/* ===  */
+
+struct edge* edge_make(struct vertex *vert)
+{
+    struct edge *edge = malloc(sizeof(struct edge));
+    memset(edge, 0, sizeof(struct vnode));
+    edge->vert = vert;
+    return edge;
+}
+
+void edge_free(struct edge *edge)
+{
+    if (edge->next) {
+        edge_free(edge->next);
+    }
+
+    free(edge);
+}
 
 /*  ===== */
 /* VNODE */
@@ -58,13 +87,13 @@ struct vnode* vnode_find_by_name(struct vnode *list, const char *name)
 
 void vnode_vertex_connect(struct vnode *a, struct vnode *b)
 {
-    struct vnode *acon = vnode_make(b->vert);
-    acon->next = a->edges;
-    a->edges = acon;
+    struct edge *acon = edge_make(b->vert);
+    acon->next = a->vert->edges;
+    a->vert->edges = acon;
 
-    struct vnode *bcon = vnode_make(a->vert);
-    bcon->next = b->edges;
-    b->edges = bcon;
+    struct edge *bcon = edge_make(a->vert);
+    bcon->next = b->vert->edges;
+    b->vert->edges = bcon;
 }
 
 struct vnode* vnode_prepend(struct vnode *list, struct vnode *node)
@@ -81,9 +110,10 @@ struct vertex* vertex_make(const char *name)
 {
     struct vertex *vert = malloc(sizeof(struct vertex));
     memset(vert, 0, sizeof(struct vertex));
-
-    if (name[0] > 'A' && name[0] <= 'Z') {
-        vert->large = 1;
+    if (name[0] >= 'A' && name[0] <= 'Z') {
+        vert->maxVisits = 0x7FFFFFFF;
+    } else {
+        vert->maxVisits = 1;
     }
 
     vert->name = malloc(strlen(name) + 1);
@@ -93,6 +123,10 @@ struct vertex* vertex_make(const char *name)
 
 void vertex_free(struct vertex *v)
 {
+    if (v->edges) {
+        edge_free(v->edges);
+    }
+
     free(v->name);
     free(v);
 }
@@ -117,12 +151,9 @@ struct vnode* graph_read(const char *filename)
         *name2 = 0;
         name2++;
 
-        printf("%s - %s\n", name1, name2);
-
         struct vnode *va;
         va = vnode_find_by_name(root, name1);
         if (!va) {
-            printf("first ref to '%s'\n", name1);
             va = vnode_make(vertex_make(name1));
 
             if (root) {
@@ -135,12 +166,10 @@ struct vnode* graph_read(const char *filename)
         struct vnode *vb;
         vb = vnode_find_by_name(root, name2);
         if (!vb) {
-            printf("first ref to '%s'\n", name2);
             vb = vnode_make(vertex_make(name2));
             root->next = vnode_prepend(root->next, vb);
         }
 
-        printf("connecting %s and %s\n", name1, name2);
         vnode_vertex_connect(va, vb);
 
         line = fgets(buf, 40, file);
@@ -159,58 +188,70 @@ void spaces(int n)
     }
 }
 
-int recursive_paths(struct vnode *node, int n)
+int is_regular_small_cave(struct vertex *vert)
 {
-    spaces(n);
-    if (strcmp(node->vert->name, "end") == 0) {
-        printf("end!\n");
+    if (!strcmp("start", vert->name)) {
+        return 0;
+    } else if (vert->name[0] >= 'a' && vert->name[0] <= 'z') {
         return 1;
     }
-    printf("%s\n", node->vert->name);
+    return 0;
+}
 
+int recursive_paths(struct vertex *vert, int twiceToken, int n)
+{
+    if (strcmp(vert->name, "end") == 0) {
+        // printf("v: ");
+        // spaces(n);
+        // printf("end!\n");
+        return 1;
+    }
     int sum = 0;
 
-    node->vert->visited = 1;
+    // printf("v: ");
+    // spaces(n);
+    // printf("%s\n", vert->name);
 
-    struct vnode *edge = node->next;
-    while (edge) {
-        if (!edge->vert->visited || edge->vert->large) {
-            sum += recursive_paths(edge, n+1);
+    if (vert->visits >= vert->maxVisits) {
+        if (twiceToken && is_regular_small_cave(vert)) {
+            twiceToken = 0;
+        } else {
+            return 0;
         }
+    }
 
+    vert->visits++;
+
+    struct edge *edge = vert->edges;
+    while (edge) {
+        struct vertex *other = (struct vertex*)edge->vert;
+        sum += recursive_paths(other, twiceToken, n+1);
         edge = edge->next;
     }
 
-    node->vert->visited = 0;
+    vert->visits--;
+
     return sum;
 }
 
 void task1()
 {
-    struct vnode *root = graph_read("sample");
+    struct vnode *root = graph_read("sample1");
+    struct vnode *start = vnode_find_by_name(root, "start");
+    const int paths = recursive_paths(start->vert, 1, 0);
+    printf("paths: %d\n", paths);
+}
 
-    struct vnode *n = root;
-    printf("ALL NODES:\n");
-    while (n) {
-        printf(" - %s\n", n->vert->name);
-
-        struct vnode *e = n->edges;
-        while (e) {
-            printf("   - %s\n", e->vert->name);
-            e = e->next;
-        }
-
-        n = n->next;
-    }
-
-    const struct vnode *start = vnode_find_by_name(root, "start");
-    start->vert->visited = 1;
-    const int paths = recursive_paths(start->edges, 0);
+void task2()
+{
+    struct vnode *root = graph_read("input");
+    struct vnode *start = vnode_find_by_name(root, "start");
+    const int paths = recursive_paths(start->vert, 1, 0);
     printf("paths: %d\n", paths);
 }
 
 int main()
 {
-    task1();
+    task2();
     return 0;
 }
