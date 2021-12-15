@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [ -f dec14.cpp ]; then
+    g++ --std=c++17 -g  dec14.cpp || exit 1
+    ./a.out $@
+else
+    exit "No input file :("
+fi
+
